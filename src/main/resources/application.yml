@@ -1,0 +1,51 @@
+server:
+  # 本机 8080 已被其它项目占用，示例统一使用 8090
+  port: 8090
+
+spring:
+  application:
+    name: rocketmq4-demo
+
+  # H2 内存库：仅为演示"消费幂等记录 + 订单状态"落在同一个数据库事务里
+  datasource:
+    url: jdbc:h2:mem:rocketmq4;MODE=MySQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+    hikari:
+      maximum-pool-size: 20
+      pool-name: rocketmq4-pool
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:db/schema.sql
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+# RocketMQ 客户端配置，前缀固定为 rocketmq
+rocketmq:
+  name-server: 127.0.0.1:9876
+  producer:
+    # 生产者组：事务消息回查、发送指标都按这个组维度统计，必须有业务含义
+    group: rocketmq4-demo-producer
+    send-message-timeout: 3000
+    retry-times-when-send-failed: 2
+    retry-times-when-send-async-failed: 2
+    max-message-size: 4194304
+
+demo:
+  mq:
+    # 延迟消息等级：3 对应 Broker 默认 messageDelayLevel 的 10s
+    delay-level: 3
+  retry:
+    # 消费重试演示开关，默认关闭，避免无意义的重试日志刷屏
+    enabled: false
+    max-times: 2
+
+logging:
+  level:
+    root: info
+    com.example.rocketmq4: info
+    org.apache.rocketmq: warn
